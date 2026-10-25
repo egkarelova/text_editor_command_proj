@@ -1,0 +1,99 @@
+text-editor/
+│
+├── .editorconfig                     # Единый стиль кода для всей команды (C# + XAML)
+├── .gitignore                        # bin/, obj/, *.db, .vs/
+├── Directory.Build.props             # Общие настройки: TargetFramework, LangVersion, Nullable, TreatWarningsAsErrors
+├── README.md                         # Краткое описание, стек, инструкция запуска, состав команды
+├── TextEditor.sln                    # Solution-файл
+│
+├── .github/
+│   ├── PULL_REQUEST_TEMPLATE.md      # Шаблон PR (что сделано, как проверить, скрин/видео)
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── task.md                   # Шаблон задачи (assignee, reviewer, DoD)
+│   │   └── bug.md                    # Шаблон бага
+│   └── workflows/
+│       └── ci.yml                    # dotnet restore → build → test на push в main и PR
+│
+├── docs/                             # Вся проектная документация (не код)
+│   ├── architecture.md               # Архитектура: слои, зависимости, ключевые решения (заполнен, см. ниже)
+│   ├── decisions.md                  # Журнал решений ADR-lite (заполнен, см. ниже)
+│   ├── requirements.md               # User stories, MVP vs stretch
+│   ├── database-schema.md            # Описание схемы БД + DDL (см. раздел 3)
+│   ├── user-guide.md                 # Руководство пользователя (Dev E, Sprint 2+)
+│   ├── dev-guide.md                  # Как собрать, тестировать, мигрировать БД (Dev E, Sprint 1)
+│   └── test-plan.md                  # Чек-лист ручного QA (Dev E)
+│
+├── src/
+│   ├── TextEditor.App/               # WPF-приложение (View + ViewModel + WPF-сервисы)
+│   │   ├── App.xaml                  # Без StartupUri, ресурсы, темы
+│   │   ├── App.xaml.cs               # Generic Host + DI + миграции при старте
+│   │   ├── AssemblyInfo.cs
+│   │   ├── GlobalUsings.cs           # Глобальные using для App
+│   │   │
+│   │   ├── Views/                    # Только XAML + code-behind (минимум логики)
+│   │   │   ├── MainWindow.xaml
+│   │   │   ├── MainWindow.xaml.cs
+│   │   │   └── AboutWindow.xaml
+│   │   │
+│   │   ├── ViewModels/               # ViewModel (CommunityToolkit.Mvvm, без code-behind-логики)
+│   │   │   ├── ViewModelBase.cs      # ObservableObject + IsBusy/ErrorMessage
+│   │   │   ├── MainViewModel.cs      # Шелл: меню, команды, навигация
+│   │   │   └── EditorViewModel.cs    # Состояние редактора, форматирование
+│   │   │
+│   │   ├── Services/                 # WPF-зависимые сервисы (работают с FlowDocument/TextRange)
+│   │   │   ├── ThemeService.cs       # IThemeService: ResourceDictionary, событие ThemeChanged
+│   │   │   ├── DocumentFormatService.cs # IDocumentFormatService: import/export .rtf/.txt
+│   │   │   └── ImageInserter.cs      # Вставка изображений в FlowDocument
+│   │   │
+│   │   ├── Behaviors/                # Attached behaviors (RichTextBox binding)
+│   │   ├── Converters/               # IValueConverter
+│   │   └── Themes/
+│   │       ├── LightTheme.xaml
+│   │       └── DarkTheme.xaml
+│   │
+│   ├── TextEditor.Core/              # Домен + интерфейсы сервисов (НЕ зависит от WPF и EF)
+│   │   ├── Models/
+│   │   │   ├── Document.cs           # record: Id, Title, Content, Format, ...
+│   │   │   ├── User.cs               # record: Id, Login, PasswordHash
+│   │   │   ├── UserSettings.cs       # record: Theme, Font, AutoSave...
+│   │   │   └── Enums.cs              # DocumentFormat { Txt, Rtf }
+│   │   │
+│   │   ├── Services/                 # Только интерфейсы (реализации — в App или Data)
+│   │   │   ├── IDocumentService.cs
+│   │   │   ├── ISettingsService.cs
+│   │   │   ├── IThemeService.cs
+│   │   │   └── IDocumentFormatService.cs
+│   │   │
+│   │   ├── Repositories/             # Интерфейсы репозиториев (реализации — в Data)
+│   │   │   ├── IDocumentRepository.cs
+│   │   │   ├── IUserRepository.cs
+│   │   │   └── ISettingsRepository.cs
+│   │   │
+│   │   └── TextEditor.Core.csproj
+│   │
+│   └── TextEditor.Data/              # EF Core + SQLite (НЕ зависит от WPF)
+│       ├── AppDbContext.cs           # DbSet'ы, OnModelCreating (конфигурации)
+│       ├── DesignTimeDbContextFactory.cs # IDesignTimeDbContextFactory для миграций
+│       ├── Entities/                 # EF-сущности (отдельно от доменных моделей Core)
+│       │   ├── UserEntity.cs
+│       │   ├── DocumentEntity.cs
+│       │   ├── DocumentRegistryEntity.cs
+│       │   ├── UserSettingsEntity.cs
+│       │   ├── AutoReplaceEntity.cs
+│       │   ├── ForbiddenWordEntity.cs
+│       │   └── DocumentVersionEntity.cs
+│       │
+│       ├── Configurations/           # IEntityTypeConfiguration<T> для каждой сущности
+│       ├── Repositories/             # Реализации интерфейсов из Core
+│       ├── Migrations/               # Автогенерируемые миграции (не править руками)
+│       └── TextEditor.Data.csproj
+│
+└── tests/
+    └── TextEditor.Tests/             # xUnit
+        ├── Services/
+        │   ├── DocumentServiceTests.cs
+        │   └── SettingsServiceTests.cs
+        ├── Repositories/
+        │   └── DocumentRepositoryTests.cs # in-memory SQLite
+        └── TestHelpers/
+            └── SqliteInMemoryFixture.cs
