@@ -21,13 +21,14 @@
 - **CI:** GitHub Actions (`dotnet restore/build/test`)
 
 ## 3. Слои и зависимости
+```
 ┌───────────────────────────────────────────────┐
 │ TextEditor.App (WPF) │
 │ Views (XAML), ViewModels, Themes, DI-старт, │
 │ WPF-зависимые сервисы (ThemeService, │
 │ DocumentFormatService, ImageInserter) │
 └──────────────────┬────────────────────────────┘
-│ использует
+                    │ использует
 ┌──────────────────▼────────────────────────────┐
 │ TextEditor.Core (домен + контракты) │
 │ Модели: Document, User, UserSettings, │
@@ -38,12 +39,13 @@
 │ IDocumentRepository, IUserRepository, │
 │ ISettingsRepository │
 └──────────────────┬────────────────────────────┘
-│ использует контракты
+                    │ использует контракты
 ┌──────────────────▼────────────────────────────┐
 │ TextEditor.Data (EF Core + SQLite) │
 │ AppDbContext, Entities, Repositories, │
 │ Migrations, DesignTimeDbContextFactory │
 └───────────────────────────────────────────────┘
+```
 
 **Правила:**
 - `Core` **не зависит** от WPF и EF Core.
