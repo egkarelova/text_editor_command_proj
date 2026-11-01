@@ -157,4 +157,27 @@ text-editor/
 
 Обоснование разделения `DocumentRegistry` / `DocumentContents` — ADR-004.
 Версионирование — ADR-005. `Format` — ADR-006.
-DDL (SQLite) в database-schema.md
+DDL (SQLite) в в [`database-schema.md`](database-schema.md).
+
+
+## 6. Основные сценарии (data flow)
+
+#### 6.1. Сохранение документа
+MainViewModel → EditorViewModel.SerializeFlowDocument()
+   → byte[] (XamlPackage)
+   → IDocumentService.SaveAsync(doc, bytes, userId)
+   → IDocumentRepository: AddVersion (старое) → UpdateContent (новое) → Trim(5)
+   → AppDbContext.SaveChangesAsync
+
+#### 6.2. Открытие документа
+MainViewModel → IDocumentService.OpenAsync(id) → Document
+              → IDocumentService.GetContentAsync(id) → byte[]
+   → EditorViewModel.LoadDocument(bytes)
+   → TextRange.Load(stream, DataFormats.XamlPackage)
+   → обновить LastOpenedAt
+
+#### 6.3. Применение темы
+View → IThemeService.ApplyAsync("Dark")
+   → заменить MergedDictionaries на DarkTheme.xaml
+   → событие ThemeChanged
+   → ISettingsService.SaveAsync (Theme = "Dark")
