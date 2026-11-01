@@ -21,6 +21,5 @@ public partial class DarkTheme : Page
 {
     public DarkTheme()
     {
-        InitializeComponent();
     }
 }

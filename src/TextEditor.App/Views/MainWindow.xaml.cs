@@ -12,15 +12,15 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using TextEditor.App.ViewModels;
 
 namespace TextEditor.App.Views;
-/// <summary>
-/// Логика взаимодействия для MainWindow.xaml
-/// </summary>
-public partial class MainWindow : Page
+
+public partial class MainWindow : Window
 {
-    public MainWindow()
+    public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
+        DataContext = viewModel;
     }
 }

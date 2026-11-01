@@ -5,6 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace TextEditor.Core.Models;
-internal class UserSettings
-{
-}
+
+public sealed record UserSettings(
+    Guid UserId,
+    string Theme,
+    string DefaultFont,
+    int DefaultFontSize,
+    bool AutoSaveEnabled,
+    int AutoSaveMinutes);

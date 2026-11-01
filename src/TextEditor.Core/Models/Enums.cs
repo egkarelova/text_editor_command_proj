@@ -5,6 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace TextEditor.Core.Models;
-internal class Enums
+
+public enum DocumentFormat
 {
+    Txt,
+    Rtf
 }
+

@@ -1,14 +1,8 @@
-﻿<Page x:Class="TextEditor.App.Themes.DarkTheme"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:TextEditor.App.Themes"
-      mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="DarkTheme">
-
-    <Grid>
-        
-    </Grid>
-</Page>
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#1E1E1E"/>
+    <SolidColorBrush x:Key="WindowForegroundBrush" Color="#E6E6E6"/>
+    <SolidColorBrush x:Key="ToolbarBackgroundBrush" Color="#2D2D2D"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#4CA8E8"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#3C3C3C"/>
+</ResourceDictionary>

@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TextEditor.App;
-internal class GlobalUsings
-{
-}
+﻿global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using System.Windows;
+global using System.Windows.Controls;
+global using System.Windows.Documents;
+global using System.Windows.Media;
+global using System.Windows.Media.Imaging;
+global using Microsoft.Extensions.DependencyInjection;

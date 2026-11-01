@@ -14,13 +14,13 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace TextEditor.App.Views;
-/// <summary>
-/// Логика взаимодействия для AboutWindow.xaml
-/// </summary>
-public partial class AboutWindow : Page
+
+public partial class AboutWindow : Window
 {
     public AboutWindow()
     {
         InitializeComponent();
     }
+
+    private void Ok_Click(object sender, RoutedEventArgs e) => Close();
 }

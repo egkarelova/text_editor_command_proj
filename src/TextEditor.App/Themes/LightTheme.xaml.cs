@@ -21,6 +21,5 @@ public partial class LightTheme : Page
 {
     public LightTheme()
     {
-        InitializeComponent();
     }
 }
