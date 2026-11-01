@@ -52,6 +52,7 @@
 - EF-сущности (`Data/Entities`) отделены от доменных моделей (`Core/Models`).
 
 ## 4. Структура решения
+```
 text-editor/
 │
 ├── .editorconfig                     # Единый стиль кода для всей команды (C# + XAML)
@@ -151,7 +152,7 @@ text-editor/
         │   └── DocumentRepositoryTests.cs # in-memory SQLite
         └── TestHelpers/
             └── SqliteInMemoryFixture.cs
-
+```
 
 ## 5. Схема БД
 
