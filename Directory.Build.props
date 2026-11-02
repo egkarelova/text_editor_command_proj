@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <!-- Общие настройки для всех проектов.
+         TargetFramework задаётся в каждом .csproj отдельно (net8.0 vs net8.0-windows). -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Раскомментировать после Sprint 2, когда код стабилизируется:
+         <TreatWarningsAsErrors>true</TreatWarningsAsErrors> -->
+  </PropertyGroup>
+</Project>

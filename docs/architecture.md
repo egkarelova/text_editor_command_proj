@@ -1,326 +1,186 @@
-\##B.1 Контекст и цели
+# Архитектура Text Editor
 
-Настольный текстовый редактор на WPF (.NET 8), хранящий документы и настройки в локальной SQLite через EF Core. Цель — MVP с возможностью расширения до функциональности, близкой к базовому Word (таблицы, списки, стили).
+Документ описывает устройство приложения: слои, зависимости, схему БД, ключевые
+интерфейсы и основные сценарии. Обоснование решений — в [`decisions.md`](decisions.md).
 
+## 1. Контекст и цели
 
+Настольный текстовый редактор на WPF (.NET 8) с хранением документов и настроек в
+локальной SQLite. Цель MVP — минимально функциональный редактор с возможностью
+расширения до базового Word (таблицы, списки, стили).
 
-\##B.2 Стек и ключевые решения
+## 2. Стек и ключевые решения
 
-UI: WPF, MVVM через CommunityToolkit.Mvvm
+- **UI:** WPF, MVVM через CommunityToolkit.Mvvm (ADR-001, ADR-009)
+- **DI:** Microsoft.Extensions.Hosting, Generic Host (ADR-008)
+- **Данные:** EF Core 8 + SQLite, миграции (ADR-002)
+- **Внутренний формат документа:** XamlPackage (ADR-003)
+- **Экспорт/импорт:** `.rtf`, `.txt` через `TextRange`
+- **Темы:** ResourceDictionary в `App`, имя активной темы — в БД
+- **Тесты:** xUnit
+- **CI:** GitHub Actions (`dotnet restore/build/test`)
 
-
-
-DI: Microsoft.Extensions.DependencyInjection в App.xaml.cs
-
-
-
-Данные: EF Core 8 + SQLite, миграции
-
-
-
-Хранение документа: XamlPackage (BLOB) — надёжно сохраняет форматирование и изображения
-
-
-
-Импорт/экспорт: .rtf, .txt (через TextRange.Load/Save)
-
-
-
-Тесты: xUnit
-
-
-
-Темы: ResourceDictionary в App, имя активной темы — в БД
-
-
-
-\##B.3 Слои и зависимости
-
+## 3. Слои и зависимости
+```
 ┌───────────────────────────────────────────────┐
-
-│  TextEditor.App (WPF)                         │
-
-│  Views (XAML), ViewModels, Themes, DI-старт,  │
-
-│  WPF-зависимые сервисы (FormatConverter,      │
-
-│  ImageInserter, ThemeService)                 │
-
+│ TextEditor.App (WPF) │
+│ Views (XAML), ViewModels, Themes, DI-старт, │
+│ WPF-зависимые сервисы (ThemeService, │
+│ DocumentFormatService, ImageInserter) │
 └──────────────────┬────────────────────────────┘
-
-&#x20;                  │ использует
-
+                    │ использует
 ┌──────────────────▼────────────────────────────┐
-
-│  TextEditor.Core (домен + сервисы)            │
-
-│  Модели: Document, AppSetting                 │
-
-│  Интерфейсы: IDocumentService,                │
-
-│  ISettingsService, IDocumentRepository,       │
-
-│  ISettingsRepository, IThemeService,          │
-
-│  IImageService                                │
-
+│ TextEditor.Core (домен + контракты) │
+│ Модели: Document, User, UserSettings, │
+│ Enums (DocumentFormat) │
+│ Интерфейсы: IDocumentService, │
+│ ISettingsService, IThemeService, │
+│ IDocumentFormatService, │
+│ IDocumentRepository, IUserRepository, │
+│ ISettingsRepository │
 └──────────────────┬────────────────────────────┘
-
-&#x20;                  │ использует интерфейсы
-
+                    │ использует контракты
 ┌──────────────────▼────────────────────────────┐
-
-│  TextEditor.Data (EF Core + SQLite)           │
-
-│  AppDbContext, DocumentRepository,            │
-
-│  SettingsRepository, миграции                 │
-
+│ TextEditor.Data (EF Core + SQLite) │
+│ AppDbContext, Entities, Repositories, │
+│ Migrations, DesignTimeDbContextFactory │
 └───────────────────────────────────────────────┘
-
-Правило: App не обращается к AppDbContext напрямую — только через сервисы Core. Data не знает про WPF.
-
-
-
-\##B.4 Структура решения
-
-\##B.5 Схема БД v1
-
-
-
-Поле	Тип	Ограничения	Комментарий
-
-Id	TEXT (GUID)	PK	
-
-Title	TEXT	NOT NULL, max 200	Имя документа
-
-Content	BLOB	NULL	XamlPackage
-
-CreatedAt	TEXT (ISO)	NOT NULL	
-
-ModifiedAt	TEXT (ISO)	NOT NULL	
-
-LastOpenedAt	TEXT (ISO)	NULL	Для Recent
-
-IsFavorite	INTEGER	NOT NULL, default 0	
-
-AppSettings
-
-
-
-Поле	Тип	Ограничения
-
-Key	TEXT	PK
-
-Value	TEXT	NOT NULL
-
-Ключи настроек: theme, default.font, default.fontSize, lastDocumentId.
-
-
-
-\##B.6 Ключевые интерфейсы (сигнатуры)
-
-csharp
-
-// TextEditor.Core/Models
-
-public sealed record Document(
-
-&#x20;   Guid Id,
-
-&#x20;   string Title,
-
-&#x20;   byte\[]? Content,
-
-&#x20;   DateTimeOffset CreatedAt,
-
-&#x20;   DateTimeOffset ModifiedAt,
-
-&#x20;   DateTimeOffset? LastOpenedAt,
-
-&#x20;   bool IsFavorite);
-
-
-
-public enum ExportFormat { Rtf, Txt }
-
-
-
-// TextEditor.Core/Services/IDocumentService.cs
-
-public interface IDocumentService
-
-{
-
-&#x20;   Task<Document> CreateNewAsync(string title, CancellationToken ct = default);
-
-&#x20;   Task<Document> OpenAsync(Guid documentId, CancellationToken ct = default);
-
-&#x20;   Task SaveAsync(Document document, CancellationToken ct = default);
-
-&#x20;   Task DeleteAsync(Guid documentId, CancellationToken ct = default);
-
-&#x20;   Task<IReadOnlyList<Document>> GetRecentAsync(int count, CancellationToken ct = default);
-
-}
-
-
-
-// TextEditor.Core/Services/ISettingsService.cs
-
-public interface ISettingsService
-
-{
-
-&#x20;   Task<string?> GetAsync(string key, CancellationToken ct = default);
-
-&#x20;   Task<string> GetAsync(string key, string defaultValue, CancellationToken ct = default);
-
-&#x20;   Task SetAsync(string key, string value, CancellationToken ct = default);
-
-}
-
-
-
-// TextEditor.Core/Services/IThemeService.cs
-
-public interface IThemeService
-
-{
-
-&#x20;   string CurrentTheme { get; }
-
-&#x20;   IReadOnlyList<string> AvailableThemes { get; }
-
-&#x20;   event EventHandler<string>? ThemeChanged;
-
-&#x20;   Task ApplyAsync(string themeName, CancellationToken ct = default);
-
-}
-
-
-
-// TextEditor.Core/Repositories/IDocumentRepository.cs
-
-public interface IDocumentRepository
-
-{
-
-&#x20;   Task<IReadOnlyList<Document>> GetAllAsync(CancellationToken ct = default);
-
-&#x20;   Task<Document?> GetByIdAsync(Guid id, CancellationToken ct = default);
-
-&#x20;   Task<Document> AddAsync(Document document, CancellationToken ct = default);
-
-&#x20;   Task UpdateAsync(Document document, CancellationToken ct = default);
-
-&#x20;   Task DeleteAsync(Guid id, CancellationToken ct = default);
-
-&#x20;   Task<IReadOnlyList<Document>> GetRecentAsync(int count, CancellationToken ct = default);
-
-}
-
-
-
-// TextEditor.Core/Repositories/ISettingsRepository.cs
-
-public interface ISettingsRepository
-
-{
-
-&#x20;   Task<string?> GetAsync(string key, CancellationToken ct = default);
-
-&#x20;   Task SetAsync(string key, string value, CancellationToken ct = default);
-
-}
-
-
-
-// TextEditor.App/Services/IDocumentFormatService.cs (WPF-зависимая, работает через TextRange)
-
-public interface IDocumentFormatService
-
-{
-
-&#x20;   // читает .rtf/.txt и возвращает XamlPackage bytes для хранения в БД
-
-&#x20;   Task<byte\[]> ImportAsync(string filePath, CancellationToken ct = default);
-
-&#x20;   // сохраняет XamlPackage bytes наружу в указанный формат
-
-&#x20;   Task ExportAsync(byte\[] xamlPackage, string filePath, ExportFormat format, CancellationToken ct = default);
-
-}
-
-Осознанно не вводим IImageService на MVP: вставка картинки — это операция над FlowDocument, реализуется в ImageInserter внутри App; в БД картинки попадают как часть XamlPackage. Если позже понадобится отдельное хранение — расширим.
-
-
-
-\##B.7 Основные сценарии (data flow)
-
-Сохранение документа
-
-
-
-text
-
-MainViewModel → IDocumentService.SaveAsync(doc)
-
-&#x20;  → IDocumentRepository.UpdateAsync(doc)
-
-&#x20;  → AppDbContext.SaveChangesAsync
-
-Content в doc заполняется EditorViewModel через TextRange.Save(stream, DataFormats.XamlPackage).
-
-
-
-Открытие документа
-
-
-
-text
-
-MainViewModel → IDocumentService.OpenAsync(id)  → Document (bytes)
-
-&#x20;  → EditorViewModel: stream = new MemoryStream(bytes)
-
-&#x20;  → TextRange.Load(stream, DataFormats.XamlPackage)
-
-&#x20;  → обновить LastOpenedAt через репозиторий
-
-Применение темы
-
-
-
-text
-
-View (Settings) → IThemeService.ApplyAsync("Dark")
-
-&#x20;  → Application.Current.Resources.MergedDictionaries заменить на DarkTheme.xaml
-
-&#x20;  → событие ThemeChanged → SettingsService.SetAsync("theme", "Dark")
-
-\##B.8 Правила и договорённости
-
-App не обращается к AppDbContext напрямую.
-
-
-
-Data не ссылается на WPF.
-
-
-
-Все публичные сервисы — через интерфейсы, регистрируются в DI в App.xaml.cs.
-
-
-
-Асинхронность: async/await до конца, CancellationToken в сигнатурах сервисов.
-
-
-
-Модели Core — record/record class; EF-сущности — отдельные классы в Data с маппингом.
-
-
-
-Логирование — Microsoft.Extensions.Logging (минимум для MVP, но заранее заложено).
-
+```
+
+**Правила:**
+- `Core` **не зависит** от WPF и EF Core.
+- `App` **не работает с `AppDbContext` напрямую** — только через сервисы `Core`.
+- `Data` **не знает про WPF**.
+- EF-сущности (`Data/Entities`) отделены от доменных моделей (`Core/Models`).
+
+## 4. Структура решения
+```
+text-editor/
+│
+├── .editorconfig                     # Единый стиль кода для всей команды (C# + XAML)
+├── .gitignore                        # bin/, obj/, *.db, .vs/
+├── Directory.Build.props             # Общие настройки: TargetFramework, LangVersion, Nullable, TreatWarningsAsErrors
+├── README.md                         # Краткое описание, стек, инструкция запуска, состав команды
+├── TextEditor.sln                    # Solution-файл
+│
+├── .github/
+│   ├── PULL_REQUEST_TEMPLATE.md      # Шаблон PR (что сделано, как проверить, скрин/видео)
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── task.md                   # Шаблон задачи (assignee, reviewer, DoD)
+│   │   └── bug.md                    # Шаблон бага
+│   └── workflows/
+│       └── ci.yml                    # dotnet restore → build → test на push в main и PR
+│
+├── docs/                             # Вся проектная документация (не код)
+│   ├── architecture.md               # Архитектура: слои, зависимости, ключевые решения (заполнен, см. ниже)
+│   ├── decisions.md                  # Журнал решений ADR-lite (заполнен, см. ниже)
+│   ├── requirements.md               # User stories, MVP vs stretch
+│   ├── database-schema.md            # Описание схемы БД + DDL (см. раздел 3)
+│   ├── user-guide.md                 # Руководство пользователя (Dev E, Sprint 2+)
+│   ├── dev-guide.md                  # Как собрать, тестировать, мигрировать БД (Dev E, Sprint 1)
+│   └── test-plan.md                  # Чек-лист ручного QA (Dev E)
+│
+├── src/
+│   ├── TextEditor.App/               # WPF-приложение (View + ViewModel + WPF-сервисы)
+│   │   ├── App.xaml                  # Без StartupUri, ресурсы, темы
+│   │   ├── App.xaml.cs               # Generic Host + DI + миграции при старте
+│   │   ├── AssemblyInfo.cs
+│   │   ├── GlobalUsings.cs           # Глобальные using для App
+│   │   │
+│   │   ├── Views/                    # Только XAML + code-behind (минимум логики)
+│   │   │   ├── MainWindow.xaml
+│   │   │   ├── MainWindow.xaml.cs
+│   │   │   └── AboutWindow.xaml
+│   │   │
+│   │   ├── ViewModels/               # ViewModel (CommunityToolkit.Mvvm, без code-behind-логики)
+│   │   │   ├── ViewModelBase.cs      # ObservableObject + IsBusy/ErrorMessage
+│   │   │   ├── MainViewModel.cs      # Шелл: меню, команды, навигация
+│   │   │   └── EditorViewModel.cs    # Состояние редактора, форматирование
+│   │   │
+│   │   ├── Services/                 # WPF-зависимые сервисы (работают с FlowDocument/TextRange)
+│   │   │   ├── ThemeService.cs       # IThemeService: ResourceDictionary, событие ThemeChanged
+│   │   │   ├── DocumentFormatService.cs # IDocumentFormatService: import/export .rtf/.txt
+│   │   │   └── ImageInserter.cs      # Вставка изображений в FlowDocument
+│   │   │
+│   │   ├── Behaviors/                # Attached behaviors (RichTextBox binding)
+│   │   ├── Converters/               # IValueConverter
+│   │   └── Themes/
+│   │       ├── LightTheme.xaml
+│   │       └── DarkTheme.xaml
+│   │
+│   ├── TextEditor.Core/              # Домен + интерфейсы сервисов (НЕ зависит от WPF и EF)
+│   │   ├── Models/
+│   │   │   ├── Document.cs           # record: Id, Title, Content, Format, ...
+│   │   │   ├── User.cs               # record: Id, Login, PasswordHash
+│   │   │   ├── UserSettings.cs       # record: Theme, Font, AutoSave...
+│   │   │   └── Enums.cs              # DocumentFormat { Txt, Rtf }
+│   │   │
+│   │   ├── Services/                 # Только интерфейсы (реализации — в App или Data)
+│   │   │   ├── IDocumentService.cs
+│   │   │   ├── ISettingsService.cs
+│   │   │   ├── IThemeService.cs
+│   │   │   └── IDocumentFormatService.cs
+│   │   │
+│   │   ├── Repositories/             # Интерфейсы репозиториев (реализации — в Data)
+│   │   │   ├── IDocumentRepository.cs
+│   │   │   ├── IUserRepository.cs
+│   │   │   └── ISettingsRepository.cs
+│   │   │
+│   │   └── TextEditor.Core.csproj
+│   │
+│   └── TextEditor.Data/              # EF Core + SQLite (НЕ зависит от WPF)
+│       ├── AppDbContext.cs           # DbSet'ы, OnModelCreating (конфигурации)
+│       ├── DesignTimeDbContextFactory.cs # IDesignTimeDbContextFactory для миграций
+│       ├── Entities/                 # EF-сущности (отдельно от доменных моделей Core)
+│       │   ├── UserEntity.cs
+│       │   ├── DocumentEntity.cs
+│       │   ├── DocumentRegistryEntity.cs
+│       │   ├── UserSettingsEntity.cs
+│       │   ├── AutoReplaceEntity.cs
+│       │   ├── ForbiddenWordEntity.cs
+│       │   └── DocumentVersionEntity.cs
+│       │
+│       ├── Configurations/           # IEntityTypeConfiguration<T> для каждой сущности
+│       ├── Repositories/             # Реализации интерфейсов из Core
+│       ├── Migrations/               # Автогенерируемые миграции (не править руками)
+│       └── TextEditor.Data.csproj
+│
+└── tests/
+    └── TextEditor.Tests/             # xUnit
+        ├── Services/
+        │   ├── DocumentServiceTests.cs
+        │   └── SettingsServiceTests.cs
+        ├── Repositories/
+        │   └── DocumentRepositoryTests.cs # in-memory SQLite
+        └── TestHelpers/
+            └── SqliteInMemoryFixture.cs
+```
+
+## 5. Схема БД
+
+Обоснование разделения `DocumentRegistry` / `DocumentContents` — ADR-004.
+Версионирование — ADR-005. `Format` — ADR-006.
+DDL (SQLite) в в [`database-schema.md`](database-schema.md).
+
+
+## 6. Основные сценарии (data flow)
+
+#### 6.1. Сохранение документа
+MainViewModel → EditorViewModel.SerializeFlowDocument()
+   → byte[] (XamlPackage)
+   → IDocumentService.SaveAsync(doc, bytes, userId)
+   → IDocumentRepository: AddVersion (старое) → UpdateContent (новое) → Trim(5)
+   → AppDbContext.SaveChangesAsync
+
+#### 6.2. Открытие документа
+MainViewModel → IDocumentService.OpenAsync(id) → Document
+              → IDocumentService.GetContentAsync(id) → byte[]
+   → EditorViewModel.LoadDocument(bytes)
+   → TextRange.Load(stream, DataFormats.XamlPackage)
+   → обновить LastOpenedAt
+
+#### 6.3. Применение темы
+View → IThemeService.ApplyAsync("Dark")
+   → заменить MergedDictionaries на DarkTheme.xaml
+   → событие ThemeChanged
+   → ISettingsService.SaveAsync (Theme = "Dark")
