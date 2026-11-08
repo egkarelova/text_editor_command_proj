@@ -27,8 +27,7 @@ public partial class App : Application
         var builder = Host.CreateApplicationBuilder();
 
         // --- Data ---
-        builder.Services.AddDbContext<AppDbContext>(o =>
-            o.UseSqlite("Data Source=app.db"));
+        builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite(DatabasePath.GetConnectionString()));
         builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
@@ -38,6 +37,7 @@ public partial class App : Application
         // builder.Services.AddScoped<ISettingsService, SettingsService>();
 
         // --- WPF services ---
+        builder.Services.AddSingleton<ICurrentUserService, CurrentUserService>();
         builder.Services.AddSingleton<IThemeService, ThemeService>();
         builder.Services.AddSingleton<IDocumentFormatService, DocumentFormatService>();
         builder.Services.AddSingleton<ImageInserter>();
@@ -56,7 +56,43 @@ public partial class App : Application
             await db.Database.MigrateAsync();
         }
 
+        // Инициализация пользователя — после миграций
+        var currentUser = _host.Services.GetRequiredService<ICurrentUserService>();
+        await currentUser.InitializeAsync();
+
         _host.Services.GetRequiredService<MainWindow>().Show();
+    }
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        // UI-поток
+        DispatcherUnhandledException += (_, args) =>
+        {
+            ShowError(args.Exception);
+            args.Handled = true;
+        };
+
+        // Фоновые задачи (Task)
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            ShowError(args.Exception);
+            args.SetObserved();
+        };
+
+        base.OnStartup(e);
+    }
+
+    private static void ShowError(Exception ex)
+    {
+        MessageBox.Show(
+            $"Произошла непредвиденная ошибка:\n\n{ex.Message}\n\n" +
+            $"Подробности: {ex.GetType().Name}",
+            "Ошибка",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+
+        var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TextEditor", "error.log");
+        File.AppendAllText(logPath, $"[{DateTime.Now:O}] {ex}\n\n");
     }
 
     private async void Application_Exit(object sender, ExitEventArgs e)
