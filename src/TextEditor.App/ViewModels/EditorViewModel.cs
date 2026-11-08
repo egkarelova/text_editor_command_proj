@@ -18,6 +18,9 @@ public partial class EditorViewModel : ViewModelBase
     [ObservableProperty]
     private Guid? _currentDocumentId;
 
+    [ObservableProperty]
+    private byte[]? _documentContent;
+
     // TODO: Александр. Методы для сериализации/десериализации FlowDocument
     // через TextRange.Save/Load с DataFormats.XamlPackage, binding RichTextBox.Document.
 }

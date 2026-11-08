@@ -11,11 +11,14 @@ namespace TextEditor.App.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
+    public EditorViewModel Editor { get; }
+
     private readonly IThemeService _themeService;
 
-    public MainViewModel(IThemeService themeService)
+    public MainViewModel(IThemeService themeService, EditorViewModel editor)
     {
         _themeService = themeService;
+        Editor = editor;
     }
 
     [ObservableProperty]
