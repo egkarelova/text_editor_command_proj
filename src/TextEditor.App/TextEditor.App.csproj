@@ -1,8 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  
+  <ItemGroup>
     <ProjectReference Include="..\TextEditor.Core\TextEditor.Core.csproj" />
     <ProjectReference Include="..\TextEditor.Data\TextEditor.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Converters\" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -10,7 +23,10 @@
     <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
 </Project>
+

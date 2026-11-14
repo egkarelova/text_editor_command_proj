@@ -2,8 +2,17 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:TextEditor.App"
-             StartupUri="MainWindow.xaml">
+             Startup="Application_Startup"
+             Exit="Application_Exit">
+             <!-- StartupUri="MainWindow.xaml"> -->
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Темы подключаются динамически через ThemeService -->
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Прямые ресурсы — ПОСЛЕ MergedDictionaries -->
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
