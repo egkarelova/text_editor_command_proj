@@ -10,4 +10,5 @@ public sealed record User(
     Guid Id,
     string Login,
     string PasswordHash,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool IsGuest);

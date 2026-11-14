@@ -9,5 +9,8 @@ namespace TextEditor.Core.Services;
 public interface ICurrentUserService
 {
     Guid UserId { get; }
-    Task InitializeAsync(CancellationToken ct = default);
+    bool IsGuest { get; }
+    bool IsAuthenticated { get; }
+    void SetCurrent(Guid userId, bool isGuest);
+    void Clear();
 }

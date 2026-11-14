@@ -13,4 +13,5 @@ public sealed record Document(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastOpenedAt,
-    bool IsFavorite);
+    bool IsFavorite,
+    bool IsShared);

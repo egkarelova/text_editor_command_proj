@@ -13,6 +13,7 @@ public sealed class DocumentRegistryEntity
     public string Title { get; set; } = string.Empty;
     public string Format { get; set; } = "txt"; // "txt" | "rtf"
     public bool IsFavorite { get; set; }
+    public bool IsShared { get; set; }
     public string? LastOpenedAt { get; set; }
     public string CreatedAt { get; set; } = string.Empty;
     public string UpdatedAt { get; set; } = string.Empty;

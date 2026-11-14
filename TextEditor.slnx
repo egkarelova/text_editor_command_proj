@@ -7,4 +7,8 @@
   <Folder Name="/tests/">
     <Project Path="tests/TextEditor.Tests/TextEditor.Tests.csproj" />
   </Folder>
+  <Folder Name="/tests/Repositories/">
+    <File Path="SettingsRepositoryTests.cs" />
+    <File Path="UserRepositoryTests.cs" />
+  </Folder>
 </Solution>

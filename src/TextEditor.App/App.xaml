@@ -7,9 +7,12 @@
              <!-- StartupUri="MainWindow.xaml"> -->
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Темы подключаются динамически через ThemeService -->
             <ResourceDictionary.MergedDictionaries>
+                <!-- Темы подключаются динамически через ThemeService -->
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Прямые ресурсы — ПОСЛЕ MergedDictionaries -->
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

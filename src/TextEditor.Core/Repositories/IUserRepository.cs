@@ -12,4 +12,5 @@ public interface IUserRepository
     Task<User?> GetByLoginAsync(string login, CancellationToken ct = default);
     Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<User> AddAsync(User user, CancellationToken ct = default);
+    Task<User?> GetGuestAsync(CancellationToken ct = default);
 }

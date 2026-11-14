@@ -16,10 +16,12 @@ public interface IDocumentRepository
     Task UpdateContentAsync(Guid id, byte[] content, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<Document>> GetRecentAsync(Guid userId, int count, CancellationToken ct = default);
+    Task<IReadOnlyList<Document>> GetAccessibleAsync(Guid userId, CancellationToken ct = default);
+    Task<IReadOnlyList<Document>> GetSharedAsync(CancellationToken ct = default);
 
     Task<byte[]?> GetContentAsync(Guid id, CancellationToken ct = default);
 
-    // Версионирование (ADR-005)
+    // Версионирование
     Task<int> GetNextVersionNumberAsync(Guid documentId, CancellationToken ct = default);
     Task AddVersionAsync(Guid documentId, byte[] content, Guid userId, CancellationToken ct = default);
     Task TrimVersionsAsync(Guid documentId, int keep, CancellationToken ct = default);

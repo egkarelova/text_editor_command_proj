@@ -6,10 +6,6 @@ using System.Threading.Tasks;
 
 namespace TextEditor.Data;
 
-/// Единая точка вычисления пути к файлу БД.
-/// Используется и в App.xaml.cs, и в DesignTimeDbContextFactory,
-/// чтобы миграции и приложение работали с одним и тем же файлом.
-
 public static class DatabasePath
 {
     public static string Get()
@@ -17,7 +13,7 @@ public static class DatabasePath
         var folder = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "TextEditor");
-        Directory.CreateDirectory(folder); // идемпотентно
+        Directory.CreateDirectory(folder);
         return Path.Combine(folder, "app.db");
     }
 

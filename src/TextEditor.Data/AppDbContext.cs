@@ -28,6 +28,7 @@ public sealed class AppDbContext : DbContext
             e.ToTable("Users");
             e.HasKey(x => x.Id);
             e.Property(x => x.Login).IsRequired().HasMaxLength(100);
+            e.Property(x => x.IsGuest).HasDefaultValue(false);
             e.HasIndex(x => x.Login).IsUnique();
             e.Property(x => x.PasswordHash).IsRequired();
             e.Property(x => x.CreatedAt).IsRequired();
@@ -58,7 +59,9 @@ public sealed class AppDbContext : DbContext
              .OnDelete(DeleteBehavior.Cascade);
             e.Property(x => x.Title).IsRequired().HasMaxLength(200);
             e.Property(x => x.Format).IsRequired().HasMaxLength(3);
+            e.Property(x => x.IsShared).HasDefaultValue(false);
             e.HasIndex(x => new { x.UserId, x.UpdatedAt });
+            e.HasIndex(x => x.IsShared);
         });
 
         modelBuilder.Entity<DocumentContentEntity>(e =>
